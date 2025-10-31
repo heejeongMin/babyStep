@@ -1,0 +1,10 @@
+services:
+  rsvp_postgres:
+    image: postgres:latest
+    container_name: postgres_hj
+    ports:
+      - 5433:5432
+    environment:
+      POSTGRES_USER: babies
+      POSTGRES_PASSWORD: babies
+
