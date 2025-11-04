@@ -12,6 +12,7 @@
             <column name="uuid" type="UUID">
                 <constraints nullable="false"/>
             </column>
+            <column name="checklist_id" type="BIGINT"/>
             <column name="name" type="VARCHAR(100)">
                 <constraints nullable="false"/>
             </column>
@@ -29,8 +30,19 @@
             </column>
         </createTable>
 
+        <createTable tableName="checklist_progress">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="uuid" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="checklist_item_id" type="TEXT[]"/>
+        </createTable>
+
         <rollback>
             <dropTable tableName="babies"/>
+            <dropTable tableName="checklist_progress"/>
         </rollback>
     </changeSet>
 </databaseChangeLog>

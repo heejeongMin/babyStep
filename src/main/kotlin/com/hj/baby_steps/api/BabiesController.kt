@@ -1,9 +1,9 @@
 package com.hj.baby_steps.api
 
 import com.hj.baby_steps.api.req.AddBabyReq
-import com.hj.baby_steps.api.res.GetBabyRes
+import com.hj.baby_steps.api.req.UpdateBabyProgressReq
 import com.hj.baby_steps.model.dto.BabyDto
-import com.hj.baby_steps.model.dto.CheckListProgressDto
+import com.hj.baby_steps.model.dto.ChecklistProgressDto
 import com.hj.baby_steps.service.BabyService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -27,13 +27,8 @@ class BabiesController(
     }
 
     @GetMapping("/{id}")
-    fun getBaby(@PathVariable id: UUID): ResponseEntity<BabyDto> {
-        return ResponseEntity.ok(babiesService.getBaby(id))
-    }
-
-    @GetMapping("/{id}/progress")
-    fun getBabyProgress(@PathVariable id: UUID): ResponseEntity<List<CheckListProgressDto>> {
-        return ResponseEntity.ok(babiesService.getBabyProgress(id))
+    fun getBaby(@PathVariable(value = "id") babyUUID: UUID): ResponseEntity<BabyDto> {
+        return ResponseEntity.ok(babiesService.getBaby(babyUUID))
     }
 
     @DeleteMapping("/{id}")
@@ -41,4 +36,18 @@ class BabiesController(
         babiesService.deleteBaby(id)
         return ResponseEntity.ok().build()
     }
+
+    @GetMapping("/{id}/progress")
+    fun getBabyProgress(@PathVariable(value = "id") babyUUID: UUID): ResponseEntity<List<ChecklistProgressDto>> {
+        return ResponseEntity.ok(babiesService.getBabyProgress(babyUUID))
+    }
+
+    @PostMapping("/{id}/progress")
+    fun updateBabyProgress(
+        @PathVariable(value = "id") babyUUID: UUID,
+        @RequestBody req: UpdateBabyProgressReq
+    ): ResponseEntity<List<ChecklistProgressDto>> {
+        return ResponseEntity.ok(babiesService.updateBabyProgress(babyUUID, req.checklistItemId, req.completed))
+    }
+
 }
