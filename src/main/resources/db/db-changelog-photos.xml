@@ -1,0 +1,40 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet id="photos" author="heejeong">
+        <createTable tableName="baby_month_photo">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="baby_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_photo_baby"
+                             references="babies(id)"
+                             deleteCascade="true"/>
+            </column>
+            <column name="month" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content_type" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="data" type="BYTEA">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_on" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- One photo per baby per month; uploading again replaces it. -->
+        <addUniqueConstraint tableName="baby_month_photo" columnNames="baby_id, month"
+                             constraintName="uq_photo_baby_month"/>
+
+        <rollback>
+            <dropTable tableName="baby_month_photo"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

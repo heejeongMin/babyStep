@@ -7,6 +7,6 @@ import java.util.UUID
 
 @Repository
 interface BabyRepository: JpaRepository<Baby, Long> {
-    fun findByUuid(uuid: UUID): Baby?
-    fun findByIsActiveIsTrue(): List<Baby>
+    fun findByUuidAndOwnerIdAndIsActiveIsTrue(uuid: UUID, ownerId: Long): Baby?
+    fun findByOwnerIdAndIsActiveIsTrue(ownerId: Long): List<Baby>
 }

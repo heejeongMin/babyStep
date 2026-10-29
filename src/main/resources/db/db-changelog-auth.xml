@@ -1,0 +1,45 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet id="auth" author="heejeong">
+        <createTable tableName="users">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="password" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="recovery_question" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="recovery_answer_hash" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_on" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Nullable: babies created before accounts existed have no owner and are not visible to anyone. -->
+        <addColumn tableName="babies">
+            <column name="owner_id" type="BIGINT"/>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="babies" baseColumnNames="owner_id"
+                                 constraintName="fk_babies_owner"
+                                 referencedTableName="users" referencedColumnNames="id"/>
+        <createIndex tableName="babies" indexName="idx_babies_owner">
+            <column name="owner_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropColumn tableName="babies" columnName="owner_id"/>
+            <dropTable tableName="users"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

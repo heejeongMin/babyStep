@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-babies}
+      POSTGRES_USER: ${POSTGRES_USER:-babies}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    # No host port mapping on purpose — only reachable from the app container on this compose's default network.
+
+  app:
+    build: .
+    container_name: baby-steps-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # The VM is small and shared with edge-caddy, wishjar and sideband — keep the heap bounded,
+    # same numbers as the sibling projects' prod compose.
+    mem_limit: 640m
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xmx320m -XX:MaxMetaspaceSize=192m"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-babies}?currentSchema=babies
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-babies}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env (32+ chars)}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:?set CORS_ALLOWED_ORIGINS in .env}
+    networks:
+      - default
+      # Reachable by edge-caddy as `baby-steps-app` (same pattern as wishjar-app / sideband-app).
+      - caddy_net
+
+networks:
+  caddy_net:
+    external: true
+
+volumes:
+  postgres_data:

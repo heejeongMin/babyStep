@@ -22,7 +22,8 @@ class Baby (
     var checklistProgress: ChecklistProgress? = null,
     var isActive: Boolean = true,
     var createdOn: Instant,
-    var updatedOn: Instant
+    var updatedOn: Instant,
+    val ownerId: Long? = null
 ) {
     @PrePersist
     fun prePersist() {
@@ -35,7 +36,7 @@ class Baby (
     }
 
     fun updateCheckList(checklistId: String, completed: Boolean) {
-        val checklistProgress = this.checklistProgress?: ChecklistProgress.create()
+        val checklistProgress = this.checklistProgress ?: ChecklistProgress.create().also { this.checklistProgress = it }
         if (completed) {
             checklistProgress.checklistItemId.add(checklistId)
         } else {
@@ -44,7 +45,7 @@ class Baby (
     }
 
     companion object {
-        fun create(name: String, birthdate: LocalDate): Baby {
+        fun create(name: String, birthdate: LocalDate, ownerId: Long): Baby {
             val now = Instant.now()
             val baby = Baby(
                 uuid = UUID.randomUUID(),
@@ -52,6 +53,7 @@ class Baby (
                 birthdate = birthdate,
                 createdOn = now,
                 updatedOn = now,
+                ownerId = ownerId,
             )
             val checklistProgress = ChecklistProgress.create()
             baby.checklistProgress = checklistProgress
