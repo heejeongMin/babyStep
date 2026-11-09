@@ -1,7 +1,8 @@
 # Deploying Baby Care Guide to the shared VM
 
-Same layout as wishjar and sideband: one compose stack per app on the Hetzner VM, with `edge-caddy` as the only
-public 80/443 listener. Public URL: `https://babysteps.5.223.79.124.sslip.io` (no DNS setup needed; to use a
+One compose stack per app on the Hetzner VM, with `edge-caddy` as the only public 80/443 listener.
+wishjar and sideband were removed from the VM on 2026-10-29 (DB dumps are in `~/backups`), so baby-steps is expected
+to be the only app there. Step 0 confirms what is actually running before anything is changed. Public URL: `https://babysteps.5.223.79.124.sslip.io` (no DNS setup needed; to use a
 DuckDNS name instead, change the site label in `edge-caddy/Caddyfile` and `CORS_ALLOWED_ORIGINS`).
 
 What is verified locally (nothing here has been run on the VM yet):
@@ -20,8 +21,8 @@ ssh -i ~/.ssh/hetzner_dogrescue root@5.223.79.124 '
 ```
 
 - `uname -m` decides how to build the image (see step 2).
-- If free memory is tight, STOP: this adds one JVM (~300 MB) and one Postgres (~60 MB) to a VM that has had OOM
-  problems before.
+- Confirm wishjar and sideband containers are really gone (`docker ps -a`). If free memory is still tight, STOP:
+  this adds one JVM (~300 MB) and one Postgres (~60 MB) to a VM that has had OOM problems before.
 - The `edge-caddy` mount sources give the real `EDGE_DIR` used below.
 
 ## 1. Frontend (static files)
@@ -37,7 +38,7 @@ scp -i ~/.ssh/hetzner_dogrescue edge-caddy/babysteps-static/privacy.html root@5.
 On the VM, create `/root/baby-steps/.env` from `.env.example` with a real `POSTGRES_PASSWORD` and
 `JWT_SECRET` (`openssl rand -base64 48`). Never commit it.
 
-Option A, build on the VM (what the sibling projects do; a Gradle build needs memory, so check step 0):
+Option A, build on the VM (a Gradle build needs memory, so check step 0):
 
 ```bash
 rsync -az --exclude build --exclude .gradle --exclude .git -e "ssh -i ~/.ssh/hetzner_dogrescue" baby-steps/ root@5.223.79.124:/root/baby-steps/
@@ -52,14 +53,14 @@ docker save baby-steps-app:latest | ssh ... docker load
 # then use `image: baby-steps-app:latest` in place of `build: .` in the compose file on the VM
 ```
 
-## 3. Edge proxy (this touches the shared Caddy that serves wishjar and sideband)
+## 3. Edge proxy (edge-caddy)
 
 ```bash
 # on the VM, in $EDGE_DIR
 cp Caddyfile Caddyfile.bak.$(date +%F) && cp docker-compose.yml docker-compose.yml.bak.$(date +%F)
 # copy over the updated Caddyfile and docker-compose.yml, then:
 docker exec edge-caddy caddy validate --config /etc/caddy/Caddyfile     # must say "Valid configuration"
-docker compose up -d        # recreates edge-caddy to pick up the two new volume mounts (brief blip for all sites)
+docker compose up -d        # recreates edge-caddy to pick up the two new volume mounts (brief blip)
 ```
 
 ## 4. Smoke test
@@ -72,7 +73,8 @@ curl -s -o /dev/null -w '%{http_code}\n' https://babysteps.5.223.79.124.sslip.io
 scripts/auth_test.sh https://babysteps.5.223.79.124.sslip.io     # creates 2 throwaway accounts; its CORS checks use localhost:5173, so 2 of 43 will differ
 ```
 
-Also confirm wishjar and sideband still answer after the Caddy change.
+If other sites are still running behind `edge-caddy`, confirm they still answer after the Caddy change.
+The old wishjar/sideband site blocks should be removed from the Caddyfile if they are still there.
 
 ## Rollback
 
