@@ -2,10 +2,10 @@
 
 One compose stack per app on the Hetzner VM, with `edge-caddy` as the only public 80/443 listener.
 wishjar and sideband were removed from the VM on 2026-10-29 (DB dumps are in `~/backups`), so baby-steps is expected
-to be the only app there. Step 0 confirms what is actually running before anything is changed. Public URL: `https://babysteps.5.223.79.124.sslip.io` (no DNS setup needed; to use a
-DuckDNS name instead, change the site label in `edge-caddy/Caddyfile` and `CORS_ALLOWED_ORIGINS`).
+to be the only app there. Step 0 confirms what is actually running before anything is changed. Public URL: `https://babystepsguide.duckdns.org` (DuckDNS record must point at the VM IP `5.223.79.124` before Caddy can get a certificate;
+the site label lives in `edge-caddy/Caddyfile` and the origin in `CORS_ALLOWED_ORIGINS`).
 
-What is verified locally (nothing here has been run on the VM yet):
+What is verified locally (the stack has been running on the VM since late October; the hostname moved from sslip.io to DuckDNS in November 2026):
 - `docker-compose.prod.yml` builds and starts cleanly (0 errors, 0 restarts), schema + Liquibase migrate, app uses
   ~290 MB of its 640 MB limit, and the 43-check auth/ownership test passes against it.
 - The new `Caddyfile` validates, and routing (`/`, `/privacy`, SPA fallback, `/api` proxy) works against the built files.
@@ -66,11 +66,11 @@ docker compose up -d        # recreates edge-caddy to pick up the two new volume
 ## 4. Smoke test
 
 ```bash
-curl -sI https://babysteps.5.223.79.124.sslip.io/ | head -1            # 200
-curl -s  https://babysteps.5.223.79.124.sslip.io/privacy | head -c 200
-curl -s -o /dev/null -w '%{http_code}\n' https://babysteps.5.223.79.124.sslip.io/api/babies        # 401 (needs login)
-curl -s -o /dev/null -w '%{http_code}\n' https://babysteps.5.223.79.124.sslip.io/actuator/health   # NOT 200 (not proxied)
-scripts/auth_test.sh https://babysteps.5.223.79.124.sslip.io     # creates 2 throwaway accounts; its CORS checks use localhost:5173, so 2 of 43 will differ
+curl -sI https://babystepsguide.duckdns.org/ | head -1            # 200
+curl -s  https://babystepsguide.duckdns.org/privacy | head -c 200
+curl -s -o /dev/null -w '%{http_code}\n' https://babystepsguide.duckdns.org/api/babies        # 401 (needs login)
+curl -s -o /dev/null -w '%{http_code}\n' https://babystepsguide.duckdns.org/actuator/health   # returns the SPA index.html, not the real actuator (not proxied)
+scripts/auth_test.sh https://babystepsguide.duckdns.org     # creates 2 throwaway accounts; its CORS checks use localhost:5173, so 2 of 43 will differ
 ```
 
 If other sites are still running behind `edge-caddy`, confirm they still answer after the Caddy change.
