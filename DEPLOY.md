@@ -103,3 +103,15 @@ scp -i ~/.ssh/hetzner_dogrescue 'root@5.223.79.124:/root/baby-steps/backups/babi
 # restore into a fresh database (stop the app first)
 zcat babies-<date>.sql.gz | docker exec -i baby-steps-postgres-1 psql -U babies -d babies
 ```
+
+## Monitoring (ntfy alerts)
+
+`scripts/monitor.sh` is installed at `/root/baby-steps/monitor.sh` and runs every 5 minutes (root crontab). It sends one
+alert per problem and one message when it clears: disk >= 80%, available memory < 20%, swap >= 80%, any of
+`baby-steps-app` / `baby-steps-postgres-1` / `edge-caddy` not running, or no backup newer than 26 h.
+Thresholds are the variables at the top of the script.
+
+Alerts go to `https://ntfy.sh/<topic>`. The topic name is the only secret: it lives in `/root/baby-steps/.ntfy-topic`
+(mode 600) and must never be committed or pasted anywhere public. To rotate it, write a new random name to that file
+and subscribe to the new one in the ntfy app. Messages contain only status text (percentages, container names).
+A dead VM cannot alert on itself, so also point an external uptime check (e.g. UptimeRobot) at the public URL.
