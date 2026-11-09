@@ -90,4 +90,16 @@ cd /root/baby-steps && docker compose -f docker-compose.prod.yml down        # a
 - Login rate limiting is in memory and resets on restart.
 - Account deletion is by email request (hj.min1031@gmail.com), not in the app yet.
 - Fonts are loaded from Google Fonts (disclosed in the privacy policy).
-- No backups are configured for the Postgres volume.
+- Backups are on the same VM (and one manual copy in `~/backups` on the Mac); there is no off-site automation yet.
+
+## Backups
+
+`scripts/backup.sh` is installed at `/root/baby-steps/backup.sh` and runs nightly at 03:30 (root crontab). It writes
+`/root/baby-steps/backups/babies-<date>.sql.gz`, verifies the gzip, and keeps 14 days. Log: `backups/backup.log`.
+
+```bash
+# pull a copy to the Mac
+scp -i ~/.ssh/hetzner_dogrescue 'root@5.223.79.124:/root/baby-steps/backups/babies-*.sql.gz' ~/backups/
+# restore into a fresh database (stop the app first)
+zcat babies-<date>.sql.gz | docker exec -i baby-steps-postgres-1 psql -U babies -d babies
+```
