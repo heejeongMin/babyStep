@@ -31,6 +31,12 @@ class JwtUtil(
         true
     }.getOrDefault(false)
 
+    /** True once less than half of the token's lifetime is left, so active users get a fresh token (rolling session). */
+    fun shouldRefresh(token: String): Boolean = runCatching {
+        val exp = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).payload.expiration.time
+        exp - System.currentTimeMillis() < expirationMs / 2
+    }.getOrDefault(false)
+
     fun getEmail(token: String): String =
         Jwts.parser().verifyWith(key).build()
             .parseSignedClaims(token).payload.subject

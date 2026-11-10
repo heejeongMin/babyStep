@@ -23,6 +23,9 @@ class JwtFilter(
             if (user != null) {
                 SecurityContextHolder.getContext().authentication =
                     UsernamePasswordAuthenticationToken(user, null, listOf(SimpleGrantedAuthority("ROLE_USER")))
+                if (jwtUtil.shouldRefresh(token) && user.id != null) {
+                    res.setHeader("X-Refreshed-Token", jwtUtil.generate(user.id!!, user.email))
+                }
             }
         }
         chain.doFilter(req, res)

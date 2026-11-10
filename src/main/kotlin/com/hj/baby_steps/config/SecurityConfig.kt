@@ -31,7 +31,7 @@ class SecurityConfig(
             allowedOriginPatterns = this@SecurityConfig.allowedOrigins
             allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
             allowedHeaders = listOf("*")
-            exposedHeaders = listOf("Retry-After")
+            exposedHeaders = listOf("Retry-After", "X-Refreshed-Token")
         }
         return UrlBasedCorsConfigurationSource().apply {
             registerCorsConfiguration("/**", config)
